@@ -49,9 +49,11 @@ assert np.allclose(test5, (1,0,0), rtol = 1e-5), "uh oh, look who just blew in f
 fig = plt.figure()  #better control
 ax = plt.axes(projection='3d')   # make 3d axes
 
+#let variable run linearly between limits and map them to cartesian coordinates
 r = np.linspace(0,1)
 theta = np.linspace(0, 2*np.pi)
 phi = np.linspace(0, 2*np.pi)
+
 
 x, y, z = sph_to_cart(r,theta,phi)
 ax.plot(x,y,z)

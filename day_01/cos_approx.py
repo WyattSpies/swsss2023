@@ -15,9 +15,11 @@ def cos_approx(x, accuracy=10):
     This is a function designed to approximate the cosine function
     with a taylor expansion
     """
+
     cos_n = [(-1)**n * x**(2*n)/factorial(2*n) for n in range(accuracy+1)]      #gives array of n terms
     cos = sum(cos_n)                                                            #sums array
     return cos
+
 
 
 # Will only run if this is run from command line as opposed to imported
