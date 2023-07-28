@@ -49,20 +49,21 @@ def storm_finder(filename, ind, storm_threshold):
             symh.append(int(tmp[ind]))
         
             if  len(year) >= 2: #search for 12 hour difference
-                if int(tmp[ind]) <= storm_threshold and symh[-2] > storm_threshold:
+                if symh[-1] <= storm_threshold and symh[-2] > storm_threshold:
                     down_time.append(int(tmp[1])*24*60 + int(tmp[1])*60 + int(tmp[3]))
                     
                     if len(up_time) == 0: 
                         storm_count = storm_count + 1
                         print("start",storm_count, day[-1], hour[-1], minute[-1])
                         
-                    elif (down_time[-1]-up_time[-1]) <= 720:
+                    elif (down_time[-1] - up_time[-1]) >= 720:
                         storm_count = storm_count + 1
                         print("start",storm_count, day[-1], hour[-1], minute[-1])
                     
-                if int(tmp[ind]) >= storm_threshold and symh[-2] < storm_threshold:
+                if symh[-1] > storm_threshold and symh[-2] <= storm_threshold:
                     up_time.append(int(tmp[1])*24*60 + int(tmp[1])*60 + int(tmp[3]))
                     print("stop",storm_count, day[-1], hour[-1], minute[-1])
+                    
                     
             #convert from days to months
             datetime1 = dt.datetime(int(tmp[0]), 1, 1, int(tmp[2]), int(tmp[3])) + dt.timedelta(days=int(tmp[1])-1)

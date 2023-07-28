@@ -119,11 +119,11 @@ from scipy.io import loadmat
 dir_density_Jb2008 = 'Data/JB2008/2002_JB2008_density.mat'
 
 # Load Density Data
-try:
-    loaded_data = loadmat(dir_density_Jb2008)
-    print (loaded_data)
-except:
-    print("File not found. Please check your directory")
+#try:
+loaded_data = loadmat(dir_density_Jb2008)
+print (loaded_data)
+#except:
+ #   print("File not found. Please check your directory")
 
 # Uses key to extract our data of interest
 JB2008_dens = loaded_data['densityData']
@@ -170,7 +170,7 @@ import matplotlib.pyplot as plt
 # Look for data that correspond to an altitude of 400 KM
 alt = 400
 hi = np.where(altitudes_JB2008==alt)
-
+ik = 4
 #Time to plot
 fig, axs = plt.subplots(1, figsize=(15, 4), sharex=True)
 
@@ -287,7 +287,8 @@ for ik in range (5):
     cbar.ax.set_ylabel('Density')
 
 axs[ik].set_xlabel("Local Solar Time", fontsize=18) 
-
+#%%
+print(JB2008_dens_reshaped.shape, tiegcm_dens_reshaped.shape)
 
 #%%
 """
@@ -310,10 +311,36 @@ Now, let's us look at how to do data interpolation with scipy
 """
 # Import required packages
 from scipy import interpolate
+import matplotlib.pyplot as plt
 
 # Let's first create some data for interpolation
 x = np.arange(0, 10)
 y = np.exp(-x/3.0)
+
+plt.scatter(x,y, color = "blue")
+# Generate 1D interpolant function
+interp_func_1D = interpolate.interp1d(x, y)
+
+# Let's select some new points
+xnew = np.arange(0, 9, 0.1)
+# use interpolation function returned by `interp1d`
+ynew = interp_func_1D(xnew)
+#plot linear interpolation
+plt.plot(xnew,ynew, '--', color = "red")
+
+
+interp_func_1D_cubic = interpolate.interp1d(x, y,kind='cubic')
+# use interpolation function returned by `interp1d`
+ycubic = interp_func_1D_cubic(xnew) 
+#plot cubic interpolation
+plt.plot(xnew,ycubic, '-.', color = "green")
+
+
+interp_func_1D_quadratic = interpolate.interp1d(x, y,kind='quadratic')
+# use interpolation function returned by `interp1d`
+yquadratic = interp_func_1D_quadratic(xnew) 
+#plot quadratic interpolation
+plt.plot(xnew,ycubic, color = "black")
 
 
 #%%
@@ -336,6 +363,13 @@ xg, yg ,zg = np.meshgrid(x, y, z, indexing='ij', sparse=True)
 
 sample_data = function_1(xg, yg, zg)
 
+# Generate Interpolant (interpolating function)
+interpolated_function_1 = RegularGridInterpolator((x, y, z), sample_data)
+
+# Say we are interested in the points [[2.1, 6.2, 8.3], [3.3, 5.2, 7.1]]
+pts = np.array([[2.1, 6.2, 8.3], [3.3, 5.2, 7.1]])
+print('Using interpolation method:',interpolated_function_1(pts)) 
+print('From true function:',function_1(pts[:,0],pts[:,1],pts[:,2]))
 
 #%%
 """
@@ -361,24 +395,70 @@ Use 3D interpolation to evaluate the TIE-GCM density field at 400 KM on
 February 1st, 2002, with the discretized grid used for the JB2008 
 ((nofLst_JB2008,nofLat_JB2008,nofAlt_JB2008).
 """
+print('TIE-GCM altitude:', altitudes_tiegcm)
+#print('JB2008 altitude:', altitudes_JB2008)
 
 
+time_index = 31*24
+#generate 3d interpolate for tiegcm
+tiegcm_interpolator = RegularGridInterpolator((localSolarTimes_tiegcm, latitudes_tiegcm, altitudes_tiegcm), tiegcm_dens_reshaped[:,:,:,time_index], bounds_error=False, fill_value=None)
 
 
+#make a meshgrid
+#xnew = 400km
+#tie_interp = tiegcm_interpolator()
 
-#%%
+#idk what the hell this is? Make a grid in opposite space and evaluate tiegcm interp in this space at 400km
+tie_JB_grid = np.zeros([len(localSolarTimes_JB2008),len(latitudes_JB2008)])
+for lst_i in range(len(localSolarTimes_JB2008)):
+    for lat_i in range(len(latitudes_JB2008)):
+        tie_JB_grid[lst_i,lat_i] = tiegcm_interpolator((localSolarTimes_JB2008[lst_i],latitudes_JB2008[lat_i],400))
+
+alt = 400
+hi1 = np.where(altitudes_tiegcm ==alt)
+hi2 = np.where(altitudes_JB2008 ==alt)
+
+#plot
+fig, axs = plt.subplots((4), figsize=(20, 20), sharex=True)
+
+#plot TIEGCM
+cs1 = axs[0].contourf(localSolarTimes_JB2008, latitudes_JB2008, tie_JB_grid.T)
+axs[0].set_title('TIEGCM Density at 400 km', fontsize=18)
+axs[0].set_ylabel("Latitudes", fontsize=18)
+axs[0].tick_params(axis = 'both', which = 'major', labelsize = 16)
+
+#plot JB2008
+cs2 = axs[1].contourf(localSolarTimes_JB2008, latitudes_JB2008, JB2008_dens_reshaped[:,:,hi2,time_index].squeeze().T)
+axs[1].set_title('JB2008 Density at 400 km', fontsize=18)
+axs[1].set_ylabel("Latitudes", fontsize=18)
+axs[1].tick_params(axis = 'both', which = 'major', labelsize = 16)
+
+# Make a colorbar for the ContourSet returned by the contourf call.
+cbar = fig.colorbar(cs1,ax = axs[0])
+cbar.ax.set_ylabel('Density')
+
+cbar = fig.colorbar(cs2,ax = axs[1])
+cbar.ax.set_ylabel('Density')
+
+#axs[0].set_xlabel("Local Solar Time", fontsize=18) 
+#axs[1].set_xlabel("Local Solar Time", fontsize=18)
+
 """
 Assignment 2 (b)
 
 Now, let's find the difference between both density models and plot out this 
 difference in a contour plot.
 """
+cs3 = axs[2].contourf(localSolarTimes_JB2008, latitudes_JB2008, (tie_JB_grid.T - JB2008_dens_reshaped[:,:,hi2,time_index].squeeze().T))
+axs[2].set_title('Density Difference at 400 km', fontsize=18)
+axs[2].set_ylabel("Latitudes", fontsize=18)
+axs[2].tick_params(axis = 'both', which = 'major', labelsize = 16)
 
+# Make a colorbar for the ContourSet returned by the contourf call.
+cbar = fig.colorbar(cs3,ax = axs[2])
+cbar.ax.set_ylabel('Density')
 
-
-
-
-#%%
+#axs[2].set_xlabel("Local Solar Time", fontsize=18)
 """
 Assignment 2 (c)
 
@@ -388,6 +468,19 @@ for this scenario.
 
 APE = abs(tiegcm_dens-JB2008_dens)/tiegcm_dens
 """
+cs4 = axs[3].contourf(localSolarTimes_JB2008, latitudes_JB2008, abs(tie_JB_grid.T - JB2008_dens_reshaped[:,:,hi2,time_index].squeeze().T)/tie_JB_grid.T)
+axs[3].set_title('Density APE at 400 km', fontsize=18)
+axs[3].set_ylabel("Latitudes", fontsize=18)
+axs[3].tick_params(axis = 'both', which = 'major', labelsize = 16)
+
+# Make a colorbar for the ContourSet returned by the contourf call.
+cbar = fig.colorbar(cs4,ax = axs[3])
+cbar.ax.set_ylabel('Density')
+
+axs[3].set_xlabel("Local Solar Time", fontsize=18)
+
+#%%
+
 
 
 

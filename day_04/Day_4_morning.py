@@ -22,7 +22,7 @@ unzip a zip file. Let's try using a Python function to unzip a file.
 # Importing the required packages
 import zipfile
 
-with zipfile.ZipFile('Data/jena_climate_2009_2016.csv.zip', 'r') as zip_ref:
+with zipfile.ZipFile('/Users/wyatt/Documents/swsss2023/day_03/Data/jena_climate_2009_2016.csv.zip', 'r') as zip_ref:
     zip_ref.extractall('Data/jena_climate_2009_2016/')
     
     
@@ -38,19 +38,33 @@ import pandas as pd
 csv_path = 'Data/jena_climate_2009_2016/jena_climate_2009_2016.csv'
 df = pd.read_csv(csv_path)
 
-#%%
 """
 TODO: Introduction to dataframe; data slicing, removing data from the 
 dataframe, assessing first and last n-th elements
 """
+df = df[5::6]
+print(df)
 
+# Let's remove the datetime value and make it into a separate variable
+date_time = pd.to_datetime(df.pop('Date Time'), format='%d.%m.%Y %H:%M:%S')
+print(date_time)
+
+print(df)
 #%%
 """
 Plot a subset of data from the dataframe
 """
 
 plot_cols = ['T (degC)', 'p (mbar)', 'rho (g/m**3)']
+plot_features = df[plot_cols]
+plot_features.index = date_time
+print(plot_features)
+_ = plot_features.plot(subplots=True)
 
+#first480
+plot_features = df[plot_cols][:480]
+plot_features.index = date_time[:480]
+_ = plot_features.plot(subplots=True)
 
 #%%
 """
@@ -64,8 +78,17 @@ TODO: Data filtering. From our table above, we noticed that the wind speed (wv)
 and max. wv has unrealistic values (-9999). These outliers need to be removed 
 from our data by substituting with an interpolated value.
 """
+import numpy as np
 
+# We will first identify the index of the bad data and then replace them with zero
+wv = df['wv (m/s)']
+bad_wv = wv == -9999.0
+print(bad_wv)
 
+wv.index = date_time
+idx_bad = np.where(bad_wv == True)
+wv = iloc[idx_bad].index
+wv = wv.drop(iloc[idx_bad].index)
 #%%
 """
 TODO: Generating histogram
