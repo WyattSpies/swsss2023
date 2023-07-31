@@ -401,7 +401,8 @@ print('TIE-GCM altitude:', altitudes_tiegcm)
 
 time_index = 31*24
 #generate 3d interpolate for tiegcm
-tiegcm_interpolator = RegularGridInterpolator((localSolarTimes_tiegcm, latitudes_tiegcm, altitudes_tiegcm), tiegcm_dens_reshaped[:,:,:,time_index], bounds_error=False, fill_value=None)
+tiegcm_interpolator = RegularGridInterpolator((localSolarTimes_tiegcm, latitudes_tiegcm, altitudes_tiegcm),
+                                              tiegcm_dens_reshaped[:,:,:,time_index], bounds_error=False, fill_value=None)
 
 
 #make a meshgrid
