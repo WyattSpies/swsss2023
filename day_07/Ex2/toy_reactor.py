@@ -11,6 +11,19 @@ import runge_kutta as rk
 #    S - numpy array carrying the stoichiometry matrix
 #    k - numpy array carrying the rate coefficients k1 = 100, k2=0.25, k3=1
 #    c_0 - initial composition, i.e., c_0(A) = 1, c_0(B)=c_0(C)=0.0
+#Define shit
+k1 = 100
+k2 = 0.25
+k3 = 1
+    
+k = np.array([k1, k2, k3])
+   
+c_0 = np.array([1, 0, 0])
+    
+S = np.array([[-1, 0, 0],[1, -1, 1],[0, 2, -2]])
+    
+
+    
 
 def reaction_rates(c,k):
     """
@@ -23,7 +36,12 @@ def reaction_rates(c,k):
         outputs:
             reaction rates (numpy array)
     """
-    return ... # please complete this function
+    
+    #r = [k1*ca, k2cb, k3cc^2]
+    
+    r = np.array([k[0] * c[0], k[1] * c[1], k[2] * c[2]**2])
+    
+    return r
 
 def reactor(c,t,k,S):
     """
@@ -38,7 +56,10 @@ def reactor(c,t,k,S):
         outputs: 
             dc/dt - numpy array
     """
-    return ... # please complete this function
+    #dc/dt = [s] dot [r]
+    dcdt = np.dot(S, reaction_rates(c,k)) #+ np.sin(t)**2 * np.array([1,0,0])
+    
+    return dcdt
 
 # Please play around with the step size to study the effect on the solution
 h = 1e-3
@@ -54,6 +75,7 @@ tspan = (0.0,5.0)
 # define dormant_prince_stepper
 def dormant_prince_stepper(f,x,t,h):
     return rk.explicit_RK_stepper(f,x,t,h,dp.a,dp.b,dp.c)
+
 
 trajectory, time_points = rk.integrate(lambda c, t: reactor(c, t, k, S), 
                                        c_0, 

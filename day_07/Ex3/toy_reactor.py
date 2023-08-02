@@ -11,7 +11,7 @@ import time
 
 # define adaptive Dormand-Prince stepper
 def adaptive_dormand_prince_stepper(f,x,t,h):
-    return ... # please complete this function 
+    return rk.adaptive_explicit_RK_stepper(f, x, t, h, dp.a, dp.b, dp.c, dp.b_control) # please complete this function 
                # using rk.adaptive_explicit_RK_stepper
 
 def reaction_rates(c,k):
@@ -108,8 +108,8 @@ ax.set_ylabel("concentration")
 for i in range(3):
     ax.plot(fixed_time_points, [c[i] for c in fixed_trajectory],
             color = colors[i], 
-            marker = "o",
-            linewidth = 2, 
+            marker = ".",
+            linewidth = 1, 
             label = species_names[i])
 
 ax = axs[1]
@@ -118,8 +118,8 @@ ax.set_ylabel("concentration")
 for i in range(3):
     ax.plot(adaptive_time_points, [c[i] for c in adaptive_trajectory],
             color = colors[i], 
-            marker = "o",
-            linewidth = 2, 
+            marker = ".",
+            linewidth = 1, 
             label = species_names[i])
 fig.savefig("adaptive_vs_fixed.pdf")
 

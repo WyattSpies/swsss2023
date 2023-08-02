@@ -1,4 +1,5 @@
 from numpy.linalg import norm
+import numpy as np
 
 def explicit_RK_stepper(f,x,t,h,a,b,c):
     """
@@ -75,7 +76,19 @@ def adaptive_explicit_RK_stepper(f,x,t,h,a,b,c,b_control):
             x_new - estimate of state at time t + h
             error - estimate of the accuracy
     """
-    return ... # please complete this function 
+    
+    s = len(c)
+    ks = [f(x,t)]
+    x_new = x + h*b[0]*ks[0]
+    error = h*(b_control[0]-b[0])*ks[0]
+    for i in range(s-1):
+        y = x + h*sum(a[i][j]*ks[j] for j in range(i+1))
+        ks.append(f(y, t+h*c[i+1]))
+        x_new += h*b[i+1]*ks[-1]
+        error += h*(b_control[i+1]-b[i+1])*ks[-1]
+        
+    return x_new, norm(error)
+               # please complete this function 
                # hint: 
                # It should be a rather simple adaptation of 
                # explicit_RK_stepper
@@ -106,7 +119,30 @@ def adaptive_integrate(f, x0, tspan, h, step, rtol = 1e-8, atol = 1e-8):
             ts - time points visited during integration (list)
             xs - trajectory of the system (list of numpy arrays)
     """
-    return ... # please complete this function 
+    ts = []
+    xs = []
+    
+    t0, tf = tspan
+    
+    x = x0
+    t = t0
+    #adaptive step sizing
+    while t < tf:
+        x_new, error = step(f, x, t, h)
+        
+        if error > rtol*norm(x_new) + atol:
+            h = h/2
+        else:
+            xs.append(x_new)
+            ts.append(t+h)
+            
+            x = x_new
+            t = t+h
+            
+            h = 2*h
+        
+    return xs, ts
+                 # please complete this function 
                # Hint 1: The slide contain pseudo code that should be a good 
                #         starting ground!
                # Hint 2: use the condition error > rtol*norm(x) + atol

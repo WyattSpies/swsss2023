@@ -5,22 +5,27 @@ import time
 import toy_reactor as model
 
 def explicit_euler_step(f,x,t,h):
-    return ... # please complete this function
+    return x + h*f(x,t) # please complete this function
 
 def implicit_euler_step(f,x,t,h):    
-    return ... # please complete this function
+    update_rule = lambda x_new : x + h*f(x_new, t+h) - x_new
+    x_hat = fsolve(update_rule, x)
+    return x_hat # please complete this function
 
 def crank_nicolson_step(f,x,t,h):
-    return ... # please complete this function
+    update_rule = lambda x_new : x + h/2*f(x_new, t+h) - x_new
+    x_hat = fsolve(update_rule, x)
+    return x_hat # please complete this function
 
 def heun_step(f,x,t,h):
-    return ... # please complete this function
+    y = x + h*f(x,t)
+    return x+h/2*(f(x,t)+f(y,t+h))  # please complete this function
 
 
 # after implementing a time stepper, 
 # add them to this list.
 # Then, run the script and check if the figures are as expected!
-integrators = []
+integrators = [explicit_euler_step, implicit_euler_step, crank_nicolson_step, heun_step]
 
 ####################################
 ### no modification needed beyond this point
