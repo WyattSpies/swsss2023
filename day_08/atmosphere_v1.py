@@ -10,13 +10,26 @@ from HydroStatSolve import get_H, get_n
 # Main code
 # ----------------------------------------------------------------------
 
+    
+#Find matrix coeff. ABC   
+def get_ABC(lam, del_t, dx):
+    K = lam*del_t/dx*dx
+    A = -K
+    B = 1 + 2*K
+    C = -K
+    return A, B, C
+    
+# def get_D(Temperature_n_i, Q_i, del_t):
+#     D = Temperature_n_i + Q_i * del_t
+
+
 if __name__ == "__main__":
    
     #variables
-    dx = 4.0
+    dz = 4.0
 
     # set x with 1 ghost cell on both sides:
-    alt = 100 + np.arange(-dx, 400 + 2*dx, dx)
+    alt = 100 + np.arange(-dz, 400 + 2*dz, dz)
     Temp = []
     
     n_N2 = []
@@ -24,17 +37,12 @@ if __name__ == "__main__":
     n_O = []
     
     nPts = len(alt)
-
-    # set default coefficients for the solver:
-    a = np.zeros(nPts) + 1
-    b = np.zeros(nPts) - 2
-    c = np.zeros(nPts) + 1
-    d = np.zeros(nPts)
     
-    #make Q
-    Q_back = np.zeros(nPts)
-    Q_EUV = np.zeros(nPts)
+    #Define constants
+    lam = 80
+    dz2 = dz*dz 
     
+    #Trig Constants
     AmpDi = 10
     AmpSd = 5
     PhaseDi = np.pi/2
@@ -43,11 +51,26 @@ if __name__ == "__main__":
     #make time
     ndays = 3
     dt = 1 #hours
+    del_t = dt*3600
     times = np.arange(0, ndays*24, dt)
     lon = -105.2705
     
     #sun intensity is lin rel to f10.7 
     f107 = 100 + 50/(24*365) + 25*np.sin(times*2*np.pi/(27*24))
+    
+    #get matrix constants ABC
+    A, B, C = get_ABC(lam, del_t, dz)
+
+    a = np.zeros(nPts) + A
+    b = np.zeros(nPts) + B
+    c = np.zeros(nPts) + C
+    d = np.zeros(nPts)
+    
+    #make Q
+    Q_back = np.zeros(nPts)
+    Q_EUV = np.zeros(nPts)
+    
+    
     
     for hour in times:
         ut = hour % 24
@@ -64,14 +87,15 @@ if __name__ == "__main__":
             fac = 0
         
         sun_heat = f107[hour]* 0.4/100
-        lam = 80.0
-        dz = alt[1]-alt[0]
-        dz2 = dz*dz
+        
         
         # Add a source term:
         Q_back[(alt>200)&(alt<400)] = 0.4
         Q_EUV[(alt>200)&(alt<400)] = sun_heat * fac
-        d = -(Q_back+Q_EUV)*dz2/lam 
+        #d = -(Q_back+Q_EUV)*dz2/lam 
+        
+        #Find Matrix D constant
+        #D = get_D(, Q_i, del_t)
         
         #Matrix boundary conditions (bottom - fixed):
         a[0] = 0
@@ -99,9 +123,9 @@ if __name__ == "__main__":
         H_O = get_H('O', alt, T, nPts)
         
         #Get_n    
-        n_N2.append(get_n(T, H_N2, dx, n_0_N2, nPts))
-        n_O2.append(get_n(T, H_O2, dx, n_0_O2, nPts))
-        n_O.append(get_n(T, H_O, dx, n_0_O, nPts))
+        n_N2.append(get_n(T, H_N2, dz, n_0_N2, nPts))
+        n_O2.append(get_n(T, H_O2, dz, n_0_O2, nPts))
+        n_O.append(get_n(T, H_O, dz, n_0_O, nPts))
         
         
         #print(np.shape(Temp))

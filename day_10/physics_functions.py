@@ -106,8 +106,8 @@ def calc_tau(SZA_in_deg, density_in_m3, scale_height_in_km, cross_section):
     tau = np.zeros((nWaves, nAlts))
 
     # calculate Tau:
-    iWave = 5
-    tau[iWave][:] = integrated_density * cross_section[iWave]
+    for iWave in range(nWaves):        ###
+        tau[iWave][:] = integrated_density * cross_section[iWave]       ###
 
     return tau
 
@@ -131,27 +131,31 @@ def calculate_Qeuv(density_in_m3,
     nAlts = len(density_in_m3)
     nWaves = len(intensity_inf)
 
-    Qeuv = np.zeros(nAlts)
+    Qeuv = np.zeros((nWaves, nAlts))
 
-    iWave = 5
+    for iWave in range(nWaves):
 
-    # intensity is a function of altitude (for a given wavelength):
-    intensity = intensity_inf[iWave] * np.exp(-tau[iWave][:])
-    Qeuv = Qeuv + \
-        efficiency * \
-        density_in_m3 * \
-        intensity * \
-        cross_section[iWave] * \
-        energies[iWave]
+        # intensity is a function of altitude (for a given wavelength):
+        intensity = intensity_inf[iWave] * np.exp(-tau[iWave][:])
+        Qeuv[iWave] = Qeuv[iWave] + \
+            efficiency * \
+            density_in_m3 * \
+            intensity * \
+            cross_section[iWave] * \
+            energies[iWave]
+            
+    Qeuv_sum = np.sum(Qeuv, axis=0)
+    
+    
 
-    return Qeuv
+    return Qeuv, Qeuv_sum
 
 #-----------------------------------------------------------------------------
 # calculate rho given densities of O (and N2 and O2)
 #-----------------------------------------------------------------------------
 
-def calc_rho(density_o, mass_o):
-    rho = density_o * mass_o * cAMU_
+def calc_rho(density, mass):
+    rho = density * mass * cAMU_
     return rho
 
 #-----------------------------------------------------------------------------
@@ -171,3 +175,47 @@ def convert_Q_to_dTdt(Qeuv, rho, cp):
     dTdt = Qeuv / (rho * cp)
     return dTdt
 
+#-----------------------------------------------------------------------------
+# Plot countours as functions of altitude and Wavelength
+#-----------------------------------------------------------------------------
+import matplotlib.pyplot as plt
+
+
+def plot_tau(wavelength, altitude, tau):
+    
+    fig, axs = plt.subplots(1,figsize=(5,5))
+    pos = axs.contourf(wavelength, altitude, tau.T)
+    axs.set_xlabel('Wavelength (A)')
+    axs.set_ylabel('Altitude (km)')
+    axs.set_title('Tau')
+    cbar = fig.colorbar(pos)
+    cbar.ax.set_ylabel('$log10(tau)$', rotation=90)
+    
+    return fig, axs
+
+def plot_Qeuv(wavelength, altitude, Qeuv):
+    
+    fig, axs = plt.subplots(1,figsize=(5,5))
+    pos = axs.contourf(wavelength, altitude, Qeuv.T)
+    axs.set_xlabel('Wavelength (A)')
+    axs.set_ylabel('Altitude (km)')
+    axs.set_title('Qeuv')
+    cbar = fig.colorbar(pos)
+    cbar.ax.set_ylabel('$Qeuv$', rotation=90)
+    
+    return fig, axs
+
+def plot_dTdt(wavelength, altitude, dTdt):
+    
+    fig, axs = plt.subplots(1,figsize=(5,5))
+    pos = axs.contourf(wavelength, altitude, dTdt.T)
+    axs.set_xlabel('Wavelength (A)')
+    axs.set_ylabel('Altitude (km)')
+    axs.set_title('dTdt')
+    cbar = fig.colorbar(pos)
+    cbar.ax.set_ylabel('$Rate$', rotation=90)
+    
+    return fig, axs
+#-----------------------------------------------------------------------------
+# 
+#-----------------------------------------------------------------------------
